@@ -16,8 +16,9 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from mainapp.views import index, products
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -25,7 +26,10 @@ urlpatterns = [
     path('products/', include('mainapp.urls', namespace='mainapp')),
     path('authapp/', include('authapp.urls', namespace='authapp')),
     path('basket/', include('basket.urls', namespace='basket')),
-    path('adminapp/', include('adminapp.urls', namespace='adminapp'))
+    path('adminapp/', include('adminapp.urls', namespace='adminapp')),
+
+
+    re_path(r'^i18n/', include('django.conf.urls.i18n'))
 
 ]
 

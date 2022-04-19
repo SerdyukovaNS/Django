@@ -123,6 +123,12 @@ class CategoryListView(ListView, BaseClassContextMixin, CustomDispatchMixin):
     template_name = 'adminapp/admin-category-read.html'
     title = 'Админка | Список категорий'
 
+    def get_queryset(self):
+        if self.kwargs:
+            return ProductCategories.objects.filter(id=self.kwargs.get('pk'))
+        else:
+            return ProductCategories.objects.all()
+
 
 # @user_passes_test(lambda u: u.is_superuser)
 # def admin_category(request):
