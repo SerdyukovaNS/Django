@@ -13,7 +13,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 
 # Create your views here.
-from authapp.forms import UserLoginForm, UserRegisterForm, UserProfileForm
+from authapp.forms import UserLoginForm, UserRegisterForm, UserProfileForm, UserProfileEditForm
 from authapp.models import User
 
 
@@ -84,7 +84,7 @@ class RegisterListView(FormView, BaseClassContextMixin):
                 user.is_activation_key_expires = None
                 user.is_active = True
                 user.save()
-                auth.login(self, user)
+                auth.login(self, user, backend='django.contrib.auth.backends.ModelBackend')
             return render(self, 'authapp/verification')
 
 
@@ -118,19 +118,27 @@ class ProfileFormView(UpdateView, BaseClassContextMixin, UserDispatchMixin):
     model = User
     template_name = 'authapp/profile.html'
     form_class = UserProfileForm
-    success_url = reverse_lazy('authapp/profile')
+    success_url = reverse_lazy('authapp:profile')
     title = 'Geekshop | Профайл'
 
-    # def get_context_data(self, **kwargs):
-    #     context = super(ProfileFormView, self).get_context_data()
-    #     context['baskets'] = Basket.objects.filter(user=self.request.user)
-    #     return context
+    def post(self, request, *args, **kwargs):
+        form =UserProfileForm(data=request.POST,files=request.FILES,instance=request.user)
+        profile_form = UserProfileEditForm(data=request.POST,files=request.FILES,instance=request.user.userprofile)
+        if form.is_valid() and profile_form.is_valid():
+            form.save()
+        return redirect(self.success_url)
 
-    # def form_valid(self, form):
-    #     messages.set_level(self.request, messages.SUCCESS)
-    #     messages.success(self.request, 'Вы успешно сохранили профиль', extra_tags='profile')
-    #     super().form_valid(form)
-    #     return HttpResponseRedirect(self.get_success_url())
+
+    def get_context_data(self, **kwargs):
+        context = super(ProfileFormView, self).get_context_data()
+        context['profile'] = UserProfileEditForm(instance=self.request.user.userprofile)
+        return context
+
+    def form_valid(self, form):
+        messages.set_level(self.request, messages.SUCCESS)
+        messages.success(self.request, 'Вы успешно сохранили профиль', extra_tags='profile')
+        super().form_valid(form)
+        return HttpResponseRedirect(self.get_success_url())
 
     def get_object(self, queryset=None):
         return User.objects.get(id=self.request.user.pk)
