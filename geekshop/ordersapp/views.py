@@ -2,13 +2,21 @@ from django.shortcuts import render
 from django.urls import reverse_lazy, reverse
 from django.forms import inlineformset_factory
 from django.db import transaction
-from django.http import HttpResponseRedirect
+from django.dispatch import receiver
+from django.db.models.signals import pre_save, pre_delete
+from django.http import HttpResponseRedirect, JsonResponse
+from django.shortcuts import HttpResponse
 # Create your views here.
 from django.views.generic import ListView, CreateView, UpdateView, DetailView, DeleteView
 from ordersapp.models import Order, OrderItem
 from ordersapp.forms import OrderItemsForm
 from adminapp.mixin import BaseClassContextMixin
 from basket.models import Basket
+from mainapp.models import Product
+
+
+def is_ajax(request):
+    return request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest'
 
 
 class OrderList(ListView, BaseClassContextMixin):
@@ -37,7 +45,7 @@ class OrderCreate(CreateView, BaseClassContextMixin):
                     form.initial['product'] = basket_item[num].product
                     form.initial['quantity'] = basket_item[num].quantity
                     form.initial['price'] = basket_item[num].product.price
-                # basket_item.delete()
+                basket_item.delete()
             else:
                 formset = OrderFormSet()
 
@@ -59,7 +67,6 @@ class OrderCreate(CreateView, BaseClassContextMixin):
         return super(OrderCreate, self).form_valid(form)
 
 
-
 class OrderUpdate(UpdateView, BaseClassContextMixin):
     model = Order
     fields = []
@@ -76,7 +83,6 @@ class OrderUpdate(UpdateView, BaseClassContextMixin):
             for num, form in enumerate(formset.forms):
                 if form.instance.pk:
                     form.initial['price'] = form.instance.product.price
-
 
         context['orderitems'] = formset
         return context
@@ -99,7 +105,6 @@ class OrderRead(DetailView, BaseClassContextMixin):
     title = 'GeekShop | Просмотр заказа'
 
 
-
 class OrderDelete(DeleteView, BaseClassContextMixin):
     model = Order
     success_url = reverse_lazy('orders:list')
@@ -111,3 +116,32 @@ def order_forming_complete(request, pk):
     order.status = Order.SEND_TO_PROCESSED
     order.save()
     return HttpResponseRedirect(reverse('orders:list'))
+
+
+def get_product_price(request, pk):
+    if is_ajax(request=request):
+        product = Product.objects.get(pk=pk)
+        if product:
+            return JsonResponse({'price': product.price})
+        return JsonResponse({'price': 0})
+
+
+
+
+
+# @receiver(pre_save, sender=OrderItem)
+# @receiver(pre_save, sender=Basket)
+# def product_quantity_update_save(sender, instance, **kwargs):
+#     if instance.pk:
+#         item = instance.get_item(int(instance.pk))
+#         instance.product.quantity -= instance.quantity - item
+#     else:
+#         instance.product.quantity -= instance.quantity
+#     instance.product.save()
+#
+#
+# @receiver(pre_delete, sender=OrderItem)
+# @receiver(pre_delete, sender=Basket)
+# def product_quantity_update_delete(sender, instance, **kwargs):
+#     instance.product.quantity += instance.quantity
+#     instance.save()
