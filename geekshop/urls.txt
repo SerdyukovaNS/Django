@@ -1,0 +1,7 @@
+http://194.67.86.44/
+http://194.67.86.44/products/
+http://194.67.86.44/products/detail/1/
+http://194.67.86.44/products/category/1/
+http://194.67.86.44/authapp/profile/
+http://194.67.86.44/ordersapp/
+http://194.67.86.44/ordersapp/update/4/

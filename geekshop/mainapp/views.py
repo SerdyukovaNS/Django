@@ -25,10 +25,10 @@ def index(request):
 def products(request, id_category=None, page=1):
 
     if id_category:
-        products = Product.objects.filter(category_id=id_category)
+        products = Product.objects.filter(category_id=id_category).select_related()
 
     else:
-        products = Product.objects.all()
+        products = Product.objects.all().select_related('category')
 
     pagination = Paginator(products, per_page=2)
 
