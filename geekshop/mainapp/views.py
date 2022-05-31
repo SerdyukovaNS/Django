@@ -8,9 +8,9 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.views.generic import DetailView
 from django.views.decorators.cache import cache_page, never_cache
 
-
 # Create your views here.
 MODULE_DIR = os.path.dirname(__file__)
+
 
 def read_file(name):
     file_path = os.path.join(MODULE_DIR, name)
@@ -36,7 +36,7 @@ def get_link_category():
         return ProductCategories.objects.all()
 
 
-def get_product(category,page):
+def get_product(category, page):
     if category:
         if settings.LOW_CACHE:
             key = f'link_product{category}{page}'
@@ -53,7 +53,7 @@ def get_product(category,page):
             link_product = cache.get(key)
             if link_product is None:
                 link_product = Product.objects.all().select_related('category')
-                cache.set(key,link_product)
+                cache.set(key, link_product)
             return link_product
         else:
             return Product.objects.all().select_related('category')
@@ -74,7 +74,6 @@ def get_product_(pk):
 @cache_page(3600)
 # @never_cache
 def products(request, id_category=None, page=1):
-
     if id_category:
         # products = Product.objects.filter(category_id=id_category).select_related()
         products = get_product(id_category, page)
@@ -107,6 +106,6 @@ class ProductDetail(DetailView):
     template_name = 'mainapp/detail.html'
 
     def get_context_data(self, **kwargs):
-        context =super(ProductDetail, self).get_context_data()
+        context = super(ProductDetail, self).get_context_data()
         context['product'] = get_product_(self.kwargs.get('pk'))
         return context
